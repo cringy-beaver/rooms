@@ -39,3 +39,6 @@ class User:
             'name': self.name,
             'second_name': self.second_name
         }
+
+    def initials(self) -> str:
+        return f"{self.name} {self.second_name}"

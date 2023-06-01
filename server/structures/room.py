@@ -15,11 +15,11 @@ TODO:
     1.3. Add user to room (✓)
     1.4. Remove user from room
     1.5. Issue task to user (✓)
-    1.6. Get room info for user
-    1.7. Get room info for owner
-    1.8. Make user_to_submit task
-        1.8.1 set user_to_submit
-        1.8.2 remove user_to_submit
+    1.6. Get room info for user (✓)
+    1.7. Get room info for owner (✓)
+    1.8. Make user_to_submit task (✓)
+        1.8.1 set user_to_submit (✓)
+        1.8.2 remove user_to_submit (✓)
     1.9. Join queue (✓)
     1.10. Leave queue (✓)
     1.11. Change position in queue (✓)
@@ -54,8 +54,11 @@ class Room:
 
         self.task_to_take_index: int = 0
         self.tasks_order: list[int] = list(range(len(tasks)))
-        self.visitors: set[User] = set()
+        self.visitors: dict[str, User] = {
+            owner.id: owner
+        }
 
+        self.submitting_user: User | None = None
         self.queue: list[User] = []
 
         self.id: str = self.__generate_id()
@@ -73,6 +76,42 @@ class Room:
         shuffle(self.tasks_order)
         self.task_to_take_index = 0
 
+    def new_submitting(self, user: User) -> Status[User]:
+        if user != self.owner:
+            return Status(
+                StatusEnum.DENIED,
+                f"Only owner can delete submitting user"
+            )
+
+        if len(self.queue) == 0:
+            self.submitting_user = None
+            return Status(
+                StatusEnum.FAILURE,
+                f"Queue is empty"
+            )
+
+        self.submitting_user = self.queue.pop(0)
+
+        return Status(
+            StatusEnum.SUCCESS,
+            "Submitting user updated",
+            data=self.submitting_user
+        )
+
+    def remove_submitting(self, user: User) -> Status[None]:
+        if user != self.owner:
+            return Status(
+                StatusEnum.DENIED,
+                f"Only owner can delete submitting user"
+            )
+
+        self.submitting_user = None
+
+        return Status(
+            StatusEnum.SUCCESS,
+            f"Submitting user deleted"
+        )
+
     def issue_task(self, user: User) -> Status[dict]:
         if user.task is not None:
             return Status(
@@ -86,7 +125,7 @@ class Room:
                 f"Owner can't take task"
             )
 
-        if user not in self.visitors:
+        if user.id not in self.visitors:
             return Status(
                 StatusEnum.DENIED,
                 f"User '{user.name} {user.second_name}' not in room"
@@ -106,7 +145,7 @@ class Room:
         )
 
     def join(self, user: User) -> Status[dict]:
-        if user in self.visitors:
+        if user.id in self.visitors:
             return Status(
                 StatusEnum.SUCCESS,
                 f"User '{user.name} {user.second_name}' already in room",
@@ -119,7 +158,7 @@ class Room:
                 f"Room is full"
             )
 
-        self.visitors.add(user)
+        self.visitors[user.id] = user
 
         return Status(
             StatusEnum.SUCCESS,
@@ -134,7 +173,7 @@ class Room:
                 f"Owner can't join to queue"
             )
 
-        if req_user not in self.visitors:
+        if req_user.id not in self.visitors:
             return Status(
                 StatusEnum.DENIED,
                 f"User '{req_user.name} {req_user.second_name}' not in room"
@@ -203,7 +242,17 @@ class Room:
         return self.__as_dict_public()
 
     def __as_dict_public(self) -> dict:
-        ...
+        return {
+            'owner': self.owner.as_dict_public(),
+            'queue': [user.as_dict_public() for user in self.queue],
+            'submitting_user': self.submitting_user.as_dict_public() if self.submitting_user is not None else None,
+            'users_not_in_queue': [user.as_dict_public() for user in self.visitors.values() if user not in self.queue],
+        }
 
     def __as_dict_private(self) -> dict:
-        ...
+        return {
+            'owner': self.owner.as_dict_private(),
+            'queue': [user.as_dict_private() for user in self.queue],
+            'submitting_user': self.submitting_user.as_dict_private() if self.submitting_user is not None else None,
+            'users_not_in_queue': [user.as_dict_private() for user in self.visitors.values() if user not in self.queue],
+        }
