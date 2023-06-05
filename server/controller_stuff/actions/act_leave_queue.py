@@ -1,5 +1,4 @@
-from .action import Action
-from ..controller import T
+from .action import Action, T
 
 from ...structures import User
 from ...tools.status import StatusEnum, Status
@@ -10,7 +9,7 @@ class ActionLeaveQueue(Action):
     action_message_ok: str = 'User left'
 
     @staticmethod
-    def __get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
+    def get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
         id_to_room = kwargs['id_to_room']
 
         check_status = Action.check_needed_fields(arg, ['room_id'])
@@ -49,7 +48,7 @@ class ActionLeaveQueue(Action):
         )
 
     @staticmethod
-    def __get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
+    def get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
             -> Status[list[tuple[dict, T]]]:
         id_to_room = kwargs['id_to_room']
         user_id_to_transmitter = kwargs['user_id_to_transmitter']
@@ -62,13 +61,15 @@ class ActionLeaveQueue(Action):
                 response.status,
                 response.message,
                 data=[
-                    {
-                        'action': ActionLeaveQueue.action_name,
-                        'status': str(response.status),
-                        'message': response.message,
-                        'data': {}
-                    },
-                    transmitter
+                    (
+                        {
+                            'action': ActionLeaveQueue.action_name,
+                            'status': str(response.status),
+                            'message': response.message,
+                            'data': {}
+                        },
+                        transmitter
+                    )
                 ]
             )
 
@@ -80,13 +81,15 @@ class ActionLeaveQueue(Action):
                 status.status,
                 status.message,
                 data=[
-                    {
-                        'action': ActionLeaveQueue.action_name,
-                        'status': str(status.status),
-                        'message': status.message,
-                        'data': {}
-                    },
-                    transmitter
+                    (
+                        {
+                            'action': ActionLeaveQueue.action_name,
+                            'status': str(status.status),
+                            'message': status.message,
+                            'data': {}
+                        },
+                        transmitter
+                    )
                 ]
             )
 

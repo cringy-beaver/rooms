@@ -20,7 +20,7 @@ class Controller(Generic[T]):
         self.user_id_to_transmitter: dict[str, T] = {}
         self.rooms: Queue[Room] = Queue()
 
-        self.commands: dict[str, type(Action)] = {
+        self.commands: dict[str, type(Action[T])] = {
             # ActionChangePosQueue.action_name: ActionChangePosQueue,
             ActionCreateRoom.action_name: ActionCreateRoom,
             ActionGetTask.action_name: ActionGetTask,
@@ -139,7 +139,7 @@ class Controller(Generic[T]):
 
         action = data['action']
         token = data['token']
-        arg = data['data']
+        arg = data['arg']
 
         # status, new_token = await self.get_user_info(token)
         status, new_token = self.get_user_info_test(token)
@@ -161,16 +161,17 @@ class Controller(Generic[T]):
 
         user = status.data
 
-        response = await self.commands[action].process(
+        response = self.commands[action].process(
+            self.commands[action],
             user,
             transmitter,
             arg,
-            user_to_room=self.user_id_to_room,
+            user_id_to_room=self.user_id_to_room,
             id_to_room=self.id_to_room,
-            user_to_transmitter=self.user_id_to_transmitter
+            user_id_to_transmitter=self.user_id_to_transmitter
         )
 
-        for data, _transmitter in response:
+        for data, _transmitter in response.data:
             if _transmitter == transmitter:
                 data['token'] = new_token
             list_to_send.append((data, _transmitter))

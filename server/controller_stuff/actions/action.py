@@ -23,34 +23,36 @@ class Action(Generic[T]):
         return Status(StatusEnum.SUCCESS, 'OK')
 
     @staticmethod
-    def process(user: User, transmitter: T, arg: dict, **kwargs) \
+    def process(act: 'Action', user: User, transmitter: T, arg: dict, **kwargs) \
             -> Status[list[tuple[dict, T]]]:
-        ready_arg_status = Action.__get_ready_arg(user, transmitter, arg, **kwargs)
+        ready_arg_status = act.get_ready_arg(user, transmitter, arg, **kwargs)
 
         if ready_arg_status.status != StatusEnum.SUCCESS:
             return Status(
                 ready_arg_status.status,
                 ready_arg_status.message,
                 data=[
-                    {
-                        'action': Action.action_name,
+                    (
+                        {
+                        'action': act.action_name,
                         'status': str(ready_arg_status.status),
                         'message': ready_arg_status.message,
                         'data': ready_arg_status.data
-                    },
-                    transmitter
+                        },
+                        transmitter
+                    )
                 ]
             )
 
-        return Action.__get_result(user, transmitter, ready_arg_status.data, **kwargs)
+        return act.get_result(user, transmitter, ready_arg_status.data, **kwargs)
 
     @staticmethod
     @abstractmethod
-    def __get_ready_arg(self, user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
+    def get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
         pass
 
     @staticmethod
     @abstractmethod
-    def __get_result(self, user: User, transmitter: T, ready_arg: dict, **kwargs) \
+    def get_result(user: User, transmitter: T, ready_arg: dict, **kwargs) \
             -> Status[list[tuple[dict, T]]]:
         pass

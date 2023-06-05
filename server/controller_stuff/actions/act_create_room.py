@@ -1,9 +1,7 @@
-from .action import Action
-from ..controller import T
+from .action import Action, T
 
 from ...structures import User, Room, Task
 from ...tools.status import StatusEnum, Status
-
 
 
 class ActionCreateRoom(Action):
@@ -11,7 +9,7 @@ class ActionCreateRoom(Action):
     action_message_ok: str = 'Room created'
 
     @staticmethod
-    def __get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
+    def get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
         user_id_to_room = kwargs['user_id_to_room']
 
         check_status = Action.check_needed_fields(arg, ['tasks'])
@@ -85,7 +83,7 @@ class ActionCreateRoom(Action):
         )
 
     @staticmethod
-    def __get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
+    def get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
             -> Status[list[tuple[dict, T]]]:
         user_id_to_room = kwargs['user_id_to_room']
         user_id_to_transmitter = kwargs['user_id_to_transmitter']
@@ -100,14 +98,14 @@ class ActionCreateRoom(Action):
             StatusEnum.SUCCESS,
             'Room created',
             data=[
-                ({
-                    'action': ActionCreateRoom.action_name,
-                    'status': 'SUCCESS',
-                    'message': ActionCreateRoom.action_message_ok,
-                    'data': room.as_dict_by_user(user)
-                 },
-                 transmitter)
+                (
+                    {
+                        'action': ActionCreateRoom.action_name,
+                        'status': 'SUCCESS',
+                        'message': ActionCreateRoom.action_message_ok,
+                        'data': room.as_dict_by_user(user)
+                    },
+                    transmitter
+                )
             ]
         )
-
-

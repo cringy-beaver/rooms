@@ -1,5 +1,4 @@
-from .action import Action
-from ..controller import T
+from .action import Action, T
 
 from ...structures import User
 from ...tools.status import StatusEnum, Status
@@ -10,7 +9,7 @@ class ActionGetTask(Action):
     action_message_ok: str = 'Task issued'
 
     @staticmethod
-    def __get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
+    def get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
         user_id_to_room = kwargs['user_id_to_room']
 
         if user.id not in user_id_to_room:
@@ -44,7 +43,7 @@ class ActionGetTask(Action):
         )
 
     @staticmethod
-    def __get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
+    def get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
             -> Status[list[tuple[dict, T]]]:
         user_id_to_room = kwargs['user_id_to_room']
         user_id_to_transmitter = kwargs['user_id_to_transmitter']
@@ -56,13 +55,15 @@ class ActionGetTask(Action):
                 response.status,
                 response.message,
                 data=[
-                    {
-                        'action': ActionGetTask.action_name,
-                        'status': str(response.status),
-                        'message': response.message,
-                        'data': {}
-                    },
-                    transmitter
+                    (
+                        {
+                            'action': ActionGetTask.action_name,
+                            'status': str(response.status),
+                            'message': response.message,
+                            'data': {}
+                        },
+                        transmitter
+                    )
                 ]
             )
 
@@ -76,38 +77,42 @@ class ActionGetTask(Action):
                 response.status,
                 response.message,
                 data=[
-                    {
-                        'action': ActionGetTask.action_name,
-                        'status': str(response.status),
-                        'message': response.message,
-                        'data': {}
-                    },
-                    transmitter
+                    (
+                        {
+                            'action': ActionGetTask.action_name,
+                            'status': str(response.status),
+                            'message': response.message,
+                            'data': {}
+                        },
+                        transmitter
+                    )
                 ]
             )
 
         data_to_sends: list[tuple[dict, T]] = []
 
-        data_to_sends.append(({
-                                  'action': ActionGetTask.action_name,
-                                  'status': 'SUCCESS',
-                                  'message': ActionGetTask.action_message_ok,
-                                  'data': {
-                                      'user': _user.as_dict_private()
-                                  }
-                              },
-                              user_id_to_transmitter[room.owner.id]
+        data_to_sends.append((
+            {
+                'action': ActionGetTask.action_name,
+                'status': 'SUCCESS',
+                'message': ActionGetTask.action_message_ok,
+                'data': {
+                    'user': _user.as_dict_private()
+                }
+            },
+            user_id_to_transmitter[room.owner.id]
         ))
 
-        data_to_sends.append(({
-                                  'action': ActionGetTask.action_name,
-                                  'status': 'SUCCESS',
-                                  'message': ActionGetTask.action_message_ok,
-                                  'data': {
-                                      'task': response.data
-                                  }
-                              },
-                              transmitter
+        data_to_sends.append((
+            {
+                'action': ActionGetTask.action_name,
+                'status': 'SUCCESS',
+                'message': ActionGetTask.action_message_ok,
+                'data': {
+                    'task': response.data
+                }
+            },
+            transmitter
         ))
 
         return Status(

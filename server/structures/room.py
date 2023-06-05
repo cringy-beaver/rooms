@@ -57,9 +57,7 @@ class Room:
 
         self.task_to_take_index: int = 0
         self.tasks_order: list[int] = list(range(len(tasks)))
-        self.id_to_visitor: dict[str, User] = {
-            owner.id: owner
-        }
+        self.id_to_visitor: dict[str, User] = {}
 
         self.time_created: datetime = datetime.now()
         self.ttl = TTL
@@ -241,7 +239,7 @@ class Room:
 
         if req_user in self.queue:
             return Status(
-                StatusEnum.SUCCESS,
+                StatusEnum.REDIRECT,
                 f"User '{req_user.name} {req_user.second_name}' already in queue"
             )
 
@@ -307,6 +305,7 @@ class Room:
             'queue': [user.as_dict_public() for user in self.queue],
             'submitting_user': self.submitting_user.as_dict_public() if self.submitting_user is not None else None,
             'users_not_in_queue': [user.as_dict_public() for user in self.id_to_visitor.values() if user not in self.queue],
+            'id': self.id,
         }
 
     def __as_dict_private(self) -> dict:
@@ -315,4 +314,5 @@ class Room:
             'queue': [user.as_dict_private() for user in self.queue],
             'submitting_user': self.submitting_user.as_dict_private() if self.submitting_user is not None else None,
             'users_not_in_queue': [user.as_dict_private() for user in self.id_to_visitor.values() if user not in self.queue],
+            'id': self.id,
         }

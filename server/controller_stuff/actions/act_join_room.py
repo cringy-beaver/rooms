@@ -1,5 +1,4 @@
-from .action import Action
-from ..controller import T
+from .action import Action, T
 
 from ...structures import User
 from ...tools.status import StatusEnum, Status
@@ -10,7 +9,7 @@ class ActionJoinRoom(Action):
     action_message_ok: str = 'User joined'
 
     @staticmethod
-    def __get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
+    def get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
         user_id_to_room = kwargs['user_id_to_room']
         user_id_to_transmitter = kwargs['user_id_to_transmitter']
         id_to_room = kwargs['id_to_room']
@@ -37,7 +36,7 @@ class ActionJoinRoom(Action):
                     'action': ActionJoinRoom.action_name,
                     'status': 'REDIRECT',
                     'message': 'You are already in room',
-                    'data': user_id_to_room[user].as_dict_by_user(user)
+                    'data': user_id_to_room[user.id].as_dict_by_user(user)
                 }
             )
 
@@ -64,7 +63,7 @@ class ActionJoinRoom(Action):
         )
 
     @staticmethod
-    def __get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
+    def get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
             -> Status[list[tuple[dict, T]]]:
         id_to_room = kwargs['id_to_room']
         user_id_to_room = kwargs['user_id_to_room']
@@ -78,13 +77,15 @@ class ActionJoinRoom(Action):
                 status.status,
                 status.message,
                 data=[
-                    {
-                        'action': ActionJoinRoom.action_name,
-                        'status': str(status.status),
-                        'message': status.message,
-                        'data': {}
-                    },
-                    transmitter
+                    (
+                        {
+                            'action': ActionJoinRoom.action_name,
+                            'status': str(status.status),
+                            'message': status.message,
+                            'data': {}
+                        },
+                        transmitter
+                    )
                 ]
             )
 
@@ -95,6 +96,20 @@ class ActionJoinRoom(Action):
 
         for visitor_id in room.id_to_visitor:
             if room.id_to_visitor[visitor_id] == user:
+                data_to_sends.append(
+                    (
+                        {
+                            'action': ActionJoinRoom.action_name,
+                            'status': 'SUCCESS',
+                            'message': ActionJoinRoom.action_message_ok,
+                            'data': {
+                                'user': user.as_dict_private(),
+                                'room': room.as_dict_by_user(user)
+                            }
+                        },
+                        transmitter
+                    )
+                )
                 continue
 
             data_to_sends.append(

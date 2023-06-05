@@ -1,5 +1,4 @@
-from .action import Action
-from ..controller import T
+from .action import Action, T
 
 from ...structures import User
 from ...tools.status import StatusEnum, Status
@@ -10,7 +9,7 @@ class ActionJoinQueue(Action):
     action_message_ok: str = 'User joined'
 
     @staticmethod
-    def __get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
+    def get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
         id_to_room = kwargs['id_to_room']
 
         check_status = Action.check_needed_fields(arg, ['room_id'])
@@ -49,7 +48,7 @@ class ActionJoinQueue(Action):
         )
 
     @staticmethod
-    def __get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
+    def get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
             -> Status[list[tuple[dict, T]]]:
         id_to_room = kwargs['id_to_room']
         user_id_to_transmitter = kwargs['user_id_to_transmitter']
@@ -63,13 +62,15 @@ class ActionJoinQueue(Action):
                 response.status,
                 response.message,
                 data=[
-                    {
-                        'action': ActionJoinQueue.action_name,
-                        'status': str(response.status),
-                        'message': response.message,
-                        'data': {}
-                    },
-                    transmitter
+                    (
+                        {
+                            'action': ActionJoinQueue.action_name,
+                            'status': str(response.status),
+                            'message': response.message,
+                            'data': {}
+                        },
+                        transmitter
+                    )
                 ]
             )
 
@@ -81,13 +82,15 @@ class ActionJoinQueue(Action):
                 status.status,
                 status.message,
                 data=[
-                    {
-                        'action': ActionJoinQueue.action_name,
-                        'status': str(status.status),
-                        'message': status.message,
-                        'data': {}
-                    },
-                    transmitter
+                    (
+                        {
+                            'action': ActionJoinQueue.action_name,
+                            'status': str(status.status),
+                            'message': status.message,
+                            'data': {}
+                        },
+                        transmitter
+                    )
                 ]
             )
 
@@ -95,35 +98,40 @@ class ActionJoinQueue(Action):
 
         for visitor_id in room.id_to_visitor:
             if room.id_to_visitor[visitor_id] == _user:
-                continue
-
-            data_to_sends.append(
-                (
+                data_to_sends.append((
                     {
                         'action': ActionJoinQueue.action_name,
                         'status': 'SUCCESS',
                         'message': ActionJoinQueue.action_message_ok,
-                        'data': {
-                            'user': _user.as_dict_public(),
-                        }
+                        'data': {}
                     },
-                    user_id_to_transmitter[visitor_id]
-                )
-            )
+                    transmitter
+                ))
 
-        data_to_sends.append(
-            (
+
+            data_to_sends.append((
                 {
                     'action': ActionJoinQueue.action_name,
                     'status': 'SUCCESS',
                     'message': ActionJoinQueue.action_message_ok,
                     'data': {
-                        'user': _user.as_dict_private(),
+                        'user': _user.as_dict_public(),
                     }
                 },
-                user_id_to_transmitter[room.owner.id]
-            )
-        )
+                user_id_to_transmitter[visitor_id]
+            ))
+
+        data_to_sends.append((
+            {
+                'action': ActionJoinQueue.action_name,
+                'status': 'SUCCESS',
+                'message': ActionJoinQueue.action_message_ok,
+                'data': {
+                    'user': _user.as_dict_private(),
+                }
+            },
+            user_id_to_transmitter[room.owner.id]
+        ))
 
         return Status(
             StatusEnum.SUCCESS,
