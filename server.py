@@ -1,26 +1,44 @@
 import asyncio
 import websockets
+import json
 
-from .server.core import Core
-from .server.network_structures import SocketSwitchboard
-from .server.tools.status import Status, StatusEnum
+from server.controller_stuff.controller import Controller
 
-CORE = Core(SocketSwitchboard())
+CONTROLLER: Controller[websockets.WebSocketServerProtocol] = Controller()
 
 
 async def listen(websocket: websockets.WebSocketServerProtocol) -> None:
-    try:
-        while True:
+    while True:
+        try:
             data = await websocket.recv()
-            response = await CORE.handle_request(data, websocket)
+        except websockets.exceptions.ConnectionClosedOK:
+            break
 
-            if response.status == ...:
-                ...
+        try:
+            data = json.loads(data)
+        except json.JSONDecodeError:
+            await websocket.send(
+                json.dumps(
+                    {
+                        'action': 'unknown',
+                        'status': 'FAILURE',
+                        'message': 'Bad json',
+                        'data': {}
+                    }
+                )
+            )
 
-    except websockets.exceptions.ConnectionClosedOK:
-        ...
-    except Exception as e:
-        ...
+            continue
+
+        response = await CONTROLLER.handle_request(data, websocket)
+
+        for data, _websocket in response:
+            try:
+                await _websocket.send(json.dumps(data))
+            except websockets.exceptions.ConnectionClosedOK:
+                pass
+            except Exception as e:
+                pass
 
 
 async def main():

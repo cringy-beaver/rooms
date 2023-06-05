@@ -1,14 +1,18 @@
 from .action import Action
-from .controller import T
+from ..controller import T
 
-from ..structures import User, Task, Room
-from ..tools.status import StatusEnum, Status
+from ...structures import User, Room, Task
+from ...tools.status import StatusEnum, Status
+
 
 
 class ActionCreateRoom(Action):
+    action_name: str = 'create_room'
+    action_message_ok: str = 'Room created'
+
     @staticmethod
     def __get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
-        user_to_room = kwargs['user_to_room']
+        user_id_to_room = kwargs['user_id_to_room']
 
         check_status = Action.check_needed_fields(arg, ['tasks'])
         if check_status.status != StatusEnum.SUCCESS:
@@ -16,22 +20,22 @@ class ActionCreateRoom(Action):
                 StatusEnum.FAILURE,
                 check_status.message,
                 data={
-                    'action': 'create_room',
-                    'status': 'FAILURE',
+                    'action': ActionCreateRoom.action_name,
+                    'status': str(check_status.status),
                     'message': check_status.message,
                     'data': {}
                 }
             )
 
-        if user in user_to_room:
+        if user.id in user_id_to_room:
             return Status(
                 StatusEnum.REDIRECT,
                 'You are already in room',
                 data={
-                    'action': 'create_room',
+                    'action': ActionCreateRoom.action_name,
                     'status': 'REDIRECT',
                     'message': 'You are already in room',
-                    'data': user_to_room[user].as_dict_by_user(user)
+                    'data': user_id_to_room[user.id].as_dict_by_user(user)
                 }
             )
 
@@ -43,8 +47,8 @@ class ActionCreateRoom(Action):
                     StatusEnum.FAILURE,
                     f'Invalid task: {task.message}',
                     data={
-                        'action': 'create_room',
-                        'status': 'FAILURE',
+                        'action': ActionCreateRoom.action_name,
+                        'status': str(task.status),
                         'message': f'Invalid task: {task.message}',
                         'data': {}
                     }
@@ -63,7 +67,7 @@ class ActionCreateRoom(Action):
                     StatusEnum.FAILURE,
                     'max_visitors must be int',
                     data={
-                        'action': 'create_room',
+                        'action': ActionCreateRoom.action_name,
                         'status': 'FAILURE',
                         'message': 'max_visitors must be int',
                         'data': {}
@@ -82,14 +86,14 @@ class ActionCreateRoom(Action):
 
     @staticmethod
     def __get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
-            -> Status[list[tuple[dict, T]]] | Status[dict]:
-        user_to_room = kwargs['user_to_room']
-        user_to_transmitter = kwargs['user_to_transmitter']
+            -> Status[list[tuple[dict, T]]]:
+        user_id_to_room = kwargs['user_id_to_room']
+        user_id_to_transmitter = kwargs['user_id_to_transmitter']
         id_to_room = kwargs['id_to_room']
 
         room = Room(**ready_args)
-        user_to_room[user] = room
-        user_to_transmitter[user] = transmitter
+        user_id_to_room[user.id] = room
+        user_id_to_transmitter[user.id] = transmitter
         id_to_room[room.id] = room
 
         return Status(
@@ -97,9 +101,9 @@ class ActionCreateRoom(Action):
             'Room created',
             data=[
                 ({
-                    'action': 'create_room',
+                    'action': ActionCreateRoom.action_name,
                     'status': 'SUCCESS',
-                    'message': 'Room created',
+                    'message': ActionCreateRoom.action_message_ok,
                     'data': room.as_dict_by_user(user)
                  },
                  transmitter)

@@ -1,11 +1,14 @@
 from .action import Action
-from .controller import T
+from ..controller import T
 
-from ..structures import User
-from ..tools.status import StatusEnum, Status
+from ...structures import User
+from ...tools.status import StatusEnum, Status
 
 
 class ActionGetRoomInfo(Action):
+    action_name: str = 'get_room_info'
+    action_message_ok: str = 'Room info'
+
     @staticmethod
     def __get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
         check_status = Action.check_needed_fields(arg, ['room_id'])
@@ -14,8 +17,8 @@ class ActionGetRoomInfo(Action):
                 StatusEnum.FAILURE,
                 'Not enough fields',
                 data={
-                    'action': 'get_room_info',
-                    'status': check_status.status.value,
+                    'action': ActionGetRoomInfo.action_name,
+                    'status': str(check_status.status),
                     'message': check_status.message,
                     'data': {}
                 }
@@ -31,7 +34,7 @@ class ActionGetRoomInfo(Action):
 
     @staticmethod
     def __get_result(user: User, transmitter: T, ready_args: dict, **kwargs) \
-            -> Status[list[tuple[dict, T]]] | Status[dict]:
+            -> Status[list[tuple[dict, T]]]:
         id_to_room = kwargs['id_to_room']
         room = id_to_room[ready_args['room_id']]
 
@@ -40,10 +43,10 @@ class ActionGetRoomInfo(Action):
             'Room info',
             data=[
                 ({
-                    'action': 'get_room_info',
-                    'status': 'SUCCESS',
-                    'message': 'Room info',
-                    'data': room.as_dict_by_user(user)
+                     'action': ActionGetRoomInfo.action_name,
+                     'status': 'SUCCESS',
+                     'message': ActionGetRoomInfo.action_message_ok,
+                     'data': room.as_dict_by_user(user)
                  }, transmitter)
             ]
         )

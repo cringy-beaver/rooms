@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from .user import User
 from .task import Task
 
@@ -7,6 +9,7 @@ from random import shuffle
 from ..tools.status import Status, StatusEnum
 
 MAX_VISITORS = 50
+TTL = 60 * 60 * 3
 
 '''
 TODO: 
@@ -54,14 +57,18 @@ class Room:
 
         self.task_to_take_index: int = 0
         self.tasks_order: list[int] = list(range(len(tasks)))
-        self.visitors: dict[str, User] = {
+        self.id_to_visitor: dict[str, User] = {
             owner.id: owner
         }
+
+        self.time_created: datetime = datetime.now()
+        self.ttl = TTL
 
         self.submitting_user: User | None = None
         self.queue: list[User] = []
 
         self.id: str = self.__generate_id()
+        self.__reset_order()
 
     def __hash__(self):
         return hash(self.id)
@@ -69,12 +76,35 @@ class Room:
     def __eq__(self, other):
         return self.id == other.id
 
+    def has_to_be_deleted(self) -> bool:
+        return (datetime.now() - self.time_created).seconds > self.ttl
+
     def __generate_id(self) -> str:
         return sha256(self.owner.id.encode()).hexdigest()
 
     def __reset_order(self) -> None:
         shuffle(self.tasks_order)
         self.task_to_take_index = 0
+
+    def get_user_by_id(self, user_id: str) -> Status[User]:
+        if user_id == self.owner.id:
+            return Status(
+                StatusEnum.SUCCESS,
+                "User found",
+                data=self.owner
+            )
+
+        if user_id in self.id_to_visitor:
+            return Status(
+                StatusEnum.SUCCESS,
+                "User found",
+                data=self.id_to_visitor[user_id]
+            )
+
+        return Status(
+            StatusEnum.FAILURE,
+            "User not found"
+        )
 
     def new_submitting(self, user: User) -> Status[User]:
         if user != self.owner:
@@ -125,7 +155,7 @@ class Room:
                 f"Owner can't take task"
             )
 
-        if user.id not in self.visitors:
+        if user.id not in self.id_to_visitor:
             return Status(
                 StatusEnum.DENIED,
                 f"User '{user.name} {user.second_name}' not in room"
@@ -144,21 +174,21 @@ class Room:
             data=task.as_dict()
         )
 
-    def join(self, user: User) -> Status[dict]:
-        if user.id in self.visitors:
+    def join_room(self, user: User) -> Status[dict]:
+        if user.id in self.id_to_visitor:
             return Status(
                 StatusEnum.SUCCESS,
                 f"User '{user.name} {user.second_name}' already in room",
                 data=self.as_dict_by_user(user)
             )
 
-        if len(self.visitors) >= self.max_visitors:
+        if len(self.id_to_visitor) >= self.max_visitors:
             return Status(
                 StatusEnum.FAILURE,
                 f"Room is full"
             )
 
-        self.visitors[user.id] = user
+        self.id_to_visitor[user.id] = user
 
         return Status(
             StatusEnum.SUCCESS,
@@ -166,14 +196,44 @@ class Room:
             data=self.as_dict_by_user(user)
         )
 
-    def join_to_queue(self, req_user: User) -> Status[None]:
+    def leave_room(self, user: User, user_id: str) -> Status[list[User]]:
+        if user != self.owner and user.id != user_id:
+            return Status(
+                StatusEnum.DENIED,
+                f"Only owner can delete submitting user"
+            )
+
+        _user = self.id_to_visitor[user_id]
+
+        if _user == self.owner:
+            return Status(
+                StatusEnum.SUCCESS_EXIT,
+                'Success, send visitors that room will be deleted',
+                data=list(self.id_to_visitor.values())
+            )
+
+        if _user.id not in self.id_to_visitor:
+            return Status(
+                StatusEnum.FAILURE,
+                f"User '{_user.name} {_user.second_name}' not in room"
+            )
+
+        self.id_to_visitor.pop(_user.id)
+
+        return Status(
+            StatusEnum.SUCCESS,
+            f"User '{_user.name} {_user.second_name}' left",
+            data=[]
+        )
+
+    def join_queue(self, req_user: User) -> Status[None]:
         if req_user == self.owner:
             return Status(
                 StatusEnum.DENIED,
                 f"Owner can't join to queue"
             )
 
-        if req_user.id not in self.visitors:
+        if req_user.id not in self.id_to_visitor:
             return Status(
                 StatusEnum.DENIED,
                 f"User '{req_user.name} {req_user.second_name}' not in room"
@@ -214,26 +274,26 @@ class Room:
             f"User '{task.name}' popped from queue"
         )
 
-    def change_position_queue(self, req_user: User, index_1: int, index_2: int) -> Status[tuple[int, int]]:
-        if req_user != self.owner:
-            return Status(
-                StatusEnum.DENIED,
-                f"Only owner can change position in queue"
-            )
-
-        if index_1 < 0 or index_1 >= len(self.queue) or index_2 < 0 or index_2 >= len(self.queue):
-            return Status(
-                StatusEnum.FAILURE,
-                f"Index out of range"
-            )
-
-        self.queue[index_1], self.queue[index_2] = self.queue[index_2], self.queue[index_1]
-
-        return Status(
-            StatusEnum.SUCCESS,
-            f"Positions changed",
-            data=(index_1, index_2)
-        )
+    # def change_position_queue(self, req_user: User, index_1: int, index_2: int) -> Status[tuple[int, int]]:
+    #     if req_user != self.owner:
+    #         return Status(
+    #             StatusEnum.DENIED,
+    #             f"Only owner can change position in queue"
+    #         )
+    #
+    #     if index_1 < 0 or index_1 >= len(self.queue) or index_2 < 0 or index_2 >= len(self.queue):
+    #         return Status(
+    #             StatusEnum.FAILURE,
+    #             f"Index out of range"
+    #         )
+    #
+    #     self.queue[index_1], self.queue[index_2] = self.queue[index_2], self.queue[index_1]
+    #
+    #     return Status(
+    #         StatusEnum.SUCCESS,
+    #         f"Positions changed",
+    #         data=(index_1, index_2)
+    #     )
 
     def as_dict_by_user(self, user: User) -> dict:
         if user == self.owner:
@@ -246,7 +306,7 @@ class Room:
             'owner': self.owner.as_dict_public(),
             'queue': [user.as_dict_public() for user in self.queue],
             'submitting_user': self.submitting_user.as_dict_public() if self.submitting_user is not None else None,
-            'users_not_in_queue': [user.as_dict_public() for user in self.visitors.values() if user not in self.queue],
+            'users_not_in_queue': [user.as_dict_public() for user in self.id_to_visitor.values() if user not in self.queue],
         }
 
     def __as_dict_private(self) -> dict:
@@ -254,5 +314,5 @@ class Room:
             'owner': self.owner.as_dict_private(),
             'queue': [user.as_dict_private() for user in self.queue],
             'submitting_user': self.submitting_user.as_dict_private() if self.submitting_user is not None else None,
-            'users_not_in_queue': [user.as_dict_private() for user in self.visitors.values() if user not in self.queue],
+            'users_not_in_queue': [user.as_dict_private() for user in self.id_to_visitor.values() if user not in self.queue],
         }

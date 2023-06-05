@@ -37,7 +37,8 @@ class User:
     def as_dict_public(self) -> dict:
         return {
             'name': self.name,
-            'second_name': self.second_name
+            'second_name': self.second_name,
+            'id': self.id,
         }
 
     def initials(self) -> str:
