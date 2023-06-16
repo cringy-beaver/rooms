@@ -11,41 +11,6 @@ from ..tools.status import Status, StatusEnum
 MAX_VISITORS = 50
 TTL = 60 * 60 * 3
 
-'''
-TODO: 
-1. Actions:
-    1.1. Create room (✓)
-    1.3. Add user to room (✓)
-    1.4. Remove user from room
-    1.5. Issue task to user (✓)
-    1.6. Get room info for user (✓)
-    1.7. Get room info for owner (✓)
-    1.8. Make user_to_submit task (✓)
-        1.8.1 set user_to_submit (✓)
-        1.8.2 remove user_to_submit (✓)
-    1.9. Join queue (✓)
-    1.10. Leave queue (✓)
-    1.11. Change position in queue (✓)
-    1.12. mix tasks order (✓)
-2. fields:
-    2.1. owner (✓)
-    2.2. tasks (✓)
-    2.3. max_visitors (✓)
-    2.4. description (✓)
-    2.5. task_to_take_index (✓)
-    2.6. tasks_order (✓)
-    2.7. visitors (✓)
-    2.8. queue (✓)
-    2.9. id (✓)
-3. methods:
-    3.1. __init__ (✓)
-    3.2. __hash__ (✓)
-    3.3. __eq__ (✓)
-    3.4. __generate_id (✓)
-    3.5. __reset_order (✓)
-    3.6. from_dict    
-'''
-
 
 class Room:
     def __init__(self, owner: User, tasks: list[Task],

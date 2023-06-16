@@ -10,6 +10,7 @@ class ActionGetRoomInfo(Action):
 
     @staticmethod
     def get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
+        id_to_room = kwargs['id_to_room']
         check_status = Action.check_needed_fields(arg, ['room_id'])
         if check_status.status != StatusEnum.SUCCESS:
             return Status(
@@ -19,6 +20,18 @@ class ActionGetRoomInfo(Action):
                     'action': ActionGetRoomInfo.action_name,
                     'status': str(check_status.status),
                     'message': check_status.message,
+                    'data': {}
+                }
+            )
+
+        if arg['room_id'] not in id_to_room:
+            return Status(
+                StatusEnum.FAILURE,
+                'Room not found',
+                data={
+                    'action': ActionGetRoomInfo.action_name,
+                    'status': 'FAILURE',
+                    'message': 'Room not found',
                     'data': {}
                 }
             )

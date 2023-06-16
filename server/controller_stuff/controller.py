@@ -1,7 +1,10 @@
+import json
 from typing import TypeVar, Generic, Hashable
 from queue import Queue
 
+
 import aiohttp as aiohttp
+import os
 
 from ..structures import User, Room
 from ..tools.status import Status, StatusEnum
@@ -10,7 +13,7 @@ from .actions import *
 
 T = TypeVar('T', bound=Hashable)
 
-AUTH_URL = '/user_info'
+AUTH_URL = os.getenv('AUTH_URL')
 
 
 class Controller(Generic[T]):
@@ -73,16 +76,15 @@ class Controller(Generic[T]):
 
     async def get_user_info(self, token: str) -> tuple[Status[User], str]:
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                    f'{AUTH_URL}?token={token}'
-            ) as resp:
+            async with session.get(f'{AUTH_URL}?token={token}') as resp:
                 if resp.status != 200:
                     return Status(
                         StatusEnum.FAILURE,
                         'Bad token'
                     ), token
 
-                data = await resp.json()
+                data = await resp.read()
+                data = json.loads(data)
                 ready_data = {}
                 ready_data['name'] = data['user']['name']
                 ready_data['second_name'] = data['user']['second_name']
@@ -137,12 +139,43 @@ class Controller(Generic[T]):
         for _transmitter, data in self.delete_old_rooms():
             list_to_send.append((_transmitter, data))
 
+        for _key in ['action', 'token', 'arg']:
+            if _key not in data:
+                list_to_send.append(
+                    (
+                        {
+                            'action': data['action'],
+                            'status': 'FAILURE',
+                            'message': f'No {_key} in request',
+                            'data': {}
+                        },
+                        transmitter
+                    )
+                )
+
+                return list_to_send
+
         action = data['action']
         token = data['token']
         arg = data['arg']
 
-        # status, new_token = await self.get_user_info(token)
-        status, new_token = self.get_user_info_test(token)
+        if action not in self.commands:
+            list_to_send.append(
+                (
+                    {
+                        'action': action,
+                        'status': 'FAILURE',
+                        'message': 'No such action',
+                        'data': {}
+                    },
+                    transmitter
+                )
+            )
+
+            return list_to_send
+
+        status, new_token = await self.get_user_info(token)
+        #status, new_token = self.get_user_info_test(token)
 
         if status.status == StatusEnum.FAILURE:
             list_to_send.append(

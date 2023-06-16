@@ -22,23 +22,31 @@
 
 <script>
 
-    const socket = new WebSocket('ws://localhost:8000');
+    const socket = new WebSocket('ws://exam4u.site:5002/', ['soap', 'xmpp']);
 
-socket.addEventListener('open', function (event) {
 
-    socket.send('Connection Established');
-
-});
+// socket.addEventListener('open', function (event) {
+//
+//     socket.send('Connection Established');
+//
+// });
 
 
 socket.addEventListener('message', function (event) {
-
     console.log(event.data);
 
 });
 
 function  contactServer() {
-    socket.send("Initialize");
+        const _test_data = {
+        'action': 'create_room',
+        'token': 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2RvVl9adGVwYW4iLCJ0dGwiOjE4MDAsImNyZWF0ZWQiOiIyMDIzLTA2LTE1IDEwOjA1OjM4In0.Sd1XN4zEWSrb5Le4wRVXGCYAXytdX2K6FANVe4KyRrW83AgJVNpBUq2WR02dc5AoNJsln7k81fUkDHh83ntg5r627UMLYSyBwsUn1UzVW-SvXfHzxpVqB_wH8w-Aw2y-_5pE1iraiMGEnGTDYwMngPBKLfLyhj9mG-dG1teQgVRtXemraLBQKVtkwPKxfg3EQS9P_R7SGLTPJPDoMY_aXGi-9ezGyD-0DnGvJ1u03lEmnjQajtAwWMKtIeyc4Ss3RwMzkxowHKYn-sQNi11ntD1BcZ73vFqGSXZnrOpZjlVZlPQcLu3ljmfAnPdIO2x-l4CgtA_aPtCIcwrQpmu6ag',
+        'arg': {
+
+        }
+    }
+    console.log(JSON.stringify(_test_data));
+    socket.send(JSON.stringify(_test_data));
 }
 
 </script>

@@ -42,7 +42,7 @@ async def listen(websocket: websockets.WebSocketServerProtocol) -> None:
 
 
 async def main():
-    server = await websockets.serve(listen, "localhost", 8000)
+    server = await websockets.serve(listen, "0.0.0.0", 5002)
     await server.wait_closed()
 
 
