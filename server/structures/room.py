@@ -166,7 +166,10 @@ class Room:
                 f"Only owner can delete submitting user"
             )
 
-        _user = self.id_to_visitor[user_id]
+        if user_id == self.owner.id:
+            _user = self.owner
+        else:
+            _user = self.id_to_visitor[user_id]
 
         if _user == self.owner:
             return Status(
@@ -215,7 +218,7 @@ class Room:
             f"User '{req_user.name} {req_user.second_name}' joined to queue"
         )
 
-    def pop_from_queue(self, req_user: User, index: int = 0) -> Status[None]:
+    def leave_queue(self, req_user: User, index: int = 0) -> Status[None]:
         if len(self.queue) == 0:
             return Status(
                 StatusEnum.FAILURE,
@@ -271,6 +274,7 @@ class Room:
             'submitting_user': self.submitting_user.as_dict_public() if self.submitting_user is not None else None,
             'users_not_in_queue': [user.as_dict_public() for user in self.id_to_visitor.values() if user not in self.queue],
             'id': self.id,
+            'description': self.description
         }
 
     def __as_dict_private(self) -> dict:
@@ -280,4 +284,5 @@ class Room:
             'submitting_user': self.submitting_user.as_dict_private() if self.submitting_user is not None else None,
             'users_not_in_queue': [user.as_dict_private() for user in self.id_to_visitor.values() if user not in self.queue],
             'id': self.id,
+            'description': self.description
         }

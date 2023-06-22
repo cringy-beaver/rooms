@@ -103,6 +103,7 @@ class ActionNewSubmitting(Action):
                     'action': ActionNewSubmitting.action_name,
                     'status': 'SUCCESS',
                     'message': ActionNewSubmitting.action_message_ok,
+                    'target': 'visitor',
                     'data': {
                         'user': submitting.as_dict_public()
                     }
@@ -115,6 +116,7 @@ class ActionNewSubmitting(Action):
                 'action': ActionNewSubmitting.action_name,
                 'status': 'SUCCESS',
                 'message': ActionNewSubmitting.action_message_ok,
+                'target': 'owner',
                 'data': {
                     'user': submitting.as_dict_private()
                 }

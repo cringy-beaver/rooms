@@ -123,6 +123,7 @@ class ActionLeaveRoom(Action):
                             'action': ActionLeaveRoom.action_secondary_name,
                             'status': 'SUCCESS',
                             'message': ActionLeaveRoom.action_message_ok_secondary,
+                            'target': 'visitor',
                             'data': {}
                         },
                         user_id_to_transmitter[visitor.id]
@@ -130,7 +131,7 @@ class ActionLeaveRoom(Action):
                 )
 
                 del user_id_to_room[visitor.id]
-                del user_id_to_transmitter[visitor]
+                del user_id_to_transmitter[visitor.id]
 
             data_to_sends.append(
                 (
@@ -138,14 +139,15 @@ class ActionLeaveRoom(Action):
                         'action': ActionLeaveRoom.action_secondary_name,
                         'status': 'SUCCESS',
                         'message': ActionLeaveRoom.action_message_ok_secondary,
+                        'target': 'owner',
                         'data': {}
                     },
-                    user_id_to_transmitter[room.owner]
+                    user_id_to_transmitter[room.owner.id]
                 )
             )
 
             del user_id_to_room[room.owner.id]
-            del user_id_to_transmitter[room.owner]
+            del user_id_to_transmitter[room.owner.id]
             del id_to_room[room.id]
 
             return Status(

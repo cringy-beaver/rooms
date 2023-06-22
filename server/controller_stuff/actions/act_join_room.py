@@ -36,7 +36,10 @@ class ActionJoinRoom(Action):
                     'action': ActionJoinRoom.action_name,
                     'status': 'REDIRECT',
                     'message': 'You are already in room',
-                    'data': user_id_to_room[user.id].as_dict_by_user(user)
+                    'data': {
+                        'room': user_id_to_room[user.id].as_dict_by_user(user),
+                        'user': user_id_to_room[user.id].id_to_visitor[user.id].as_dict_private()
+                    }
                 }
             )
 

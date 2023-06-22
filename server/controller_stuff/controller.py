@@ -175,7 +175,7 @@ class Controller(Generic[T]):
             return list_to_send
 
         status, new_token = await self.get_user_info(token)
-        #status, new_token = self.get_user_info_test(token)
+        # status, new_token = self.get_user_info_test(token)
 
         if status.status == StatusEnum.FAILURE:
             list_to_send.append(

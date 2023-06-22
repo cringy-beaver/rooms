@@ -13,6 +13,11 @@ async def listen(websocket: websockets.WebSocketServerProtocol) -> None:
             data = await websocket.recv()
         except websockets.exceptions.ConnectionClosedOK:
             break
+        except websockets.exceptions.ConnectionClosedError:
+            break
+        except Exception as e:
+            break
+
 
         try:
             data = json.loads(data)

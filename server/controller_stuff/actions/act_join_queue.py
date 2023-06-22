@@ -103,11 +103,13 @@ class ActionJoinQueue(Action):
                         'action': ActionJoinQueue.action_name,
                         'status': 'SUCCESS',
                         'message': ActionJoinQueue.action_message_ok,
-                        'data': {}
+                        'data': {
+                            'user': _user.as_dict_private(),
+                        }
                     },
                     transmitter
                 ))
-
+                continue
 
             data_to_sends.append((
                 {

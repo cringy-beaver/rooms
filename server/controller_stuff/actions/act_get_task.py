@@ -32,7 +32,9 @@ class ActionGetTask(Action):
                     'action': ActionGetTask.action_name,
                     'status': 'REDIRECT',
                     'message': 'You already have task',
-                    'data': user_id_to_room[user.id].id_to_visitor[user.id].task.as_dict()
+                    'data': {
+                        'task': user_id_to_room[user.id].id_to_visitor[user.id].task.as_dict()
+                    }
                 }
             )
 

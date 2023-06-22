@@ -17,7 +17,7 @@ def print_dict(data: dict, offset: int = 0):
 
 
 async def test():
-    async with websockets.connect('ws://localhost:8000') as websocket:
+    async with websockets.connect('ws://localhost:5002') as websocket:
         data_1 = {
             'action': 'create_room',
             'token': '1',

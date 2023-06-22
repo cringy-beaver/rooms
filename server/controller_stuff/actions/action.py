@@ -33,12 +33,7 @@ class Action(Generic[T]):
                 ready_arg_status.message,
                 data=[
                     (
-                        {
-                        'action': act.action_name,
-                        'status': str(ready_arg_status.status),
-                        'message': ready_arg_status.message,
-                        'data': ready_arg_status.data
-                        },
+                        ready_arg_status.data,
                         transmitter
                     )
                 ]

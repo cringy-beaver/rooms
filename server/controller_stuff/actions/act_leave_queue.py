@@ -97,6 +97,19 @@ class ActionLeaveQueue(Action):
 
         for visitor_id in room.id_to_visitor:
             if room.id_to_visitor[visitor_id] == _user:
+                data_to_sends.append(
+                    (
+                        {
+                            'action': ActionLeaveQueue.action_name,
+                            'status': 'SUCCESS',
+                            'message': ActionLeaveQueue.action_message_ok,
+                            'data': {
+                                'user': _user.as_dict_public(),
+                            }
+                        },
+                        transmitter
+                    )
+                )
                 continue
 
             data_to_sends.append(
