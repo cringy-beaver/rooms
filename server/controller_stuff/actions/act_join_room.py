@@ -29,6 +29,22 @@ class ActionJoinRoom(Action):
 
         if user.id in user_id_to_room:
             user_id_to_transmitter[user.id] = transmitter
+
+            if user_id_to_room[user.id].owner == user:
+                return Status(
+                    StatusEnum.REDIRECT,
+                    'You are owner of room',
+                    data={
+                        'action': ActionJoinRoom.action_name,
+                        'status': 'REDIRECT',
+                        'message': 'You are owner of room',
+                        'data': {
+                            'room': user_id_to_room[user.id].as_dict_by_user(user),
+                            'user': user_id_to_room[user.id].owner.as_dict_private()
+                        }
+                    }
+                )
+
             return Status(
                 StatusEnum.REDIRECT,
                 'You are already in room',

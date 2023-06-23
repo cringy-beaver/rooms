@@ -23,6 +23,18 @@ class ActionNewSubmitting(Action):
                 }
             )
 
+        if arg['room_id'] not in kwargs['id_to_room']:
+            return Status(
+                StatusEnum.FAILURE,
+                f'Room with id {arg["room_id"]} not found',
+                data={
+                    'action': ActionNewSubmitting.action_name,
+                    'status': 'FAILURE',
+                    'message': f'Room with id {arg["room_id"]} not found',
+                    'data': {}
+                }
+            )
+
         return Status(
             StatusEnum.SUCCESS,
             'Ready arg created',
@@ -58,22 +70,22 @@ class ActionNewSubmitting(Action):
 
         _user = response.data
 
-        if _user.id not in room.id_to_visitor:
-            return Status(
-                StatusEnum.FAILURE,
-                'User is not in this room',
-                data=[
-                    (
-                        {
-                            'action': ActionNewSubmitting.action_name,
-                            'status': 'FAILURE',
-                            'message': 'User is not in this room',
-                            'data': {}
-                        },
-                        transmitter
-                    )
-                ]
-            )
+        # if _user.id not in room.id_to_visitor:
+        #     return Status(
+        #         StatusEnum.FAILURE,
+        #         'User is not in this room',
+        #         data=[
+        #             (
+        #                 {
+        #                     'action': ActionNewSubmitting.action_name,
+        #                     'status': 'FAILURE',
+        #                     'message': 'User is not in this room',
+        #                     'data': {}
+        #                 },
+        #                 transmitter
+        #             )
+        #         ]
+        #     )
 
         response = room.new_submitting(_user)
 

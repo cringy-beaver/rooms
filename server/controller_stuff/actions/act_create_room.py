@@ -11,7 +11,7 @@ class ActionCreateRoom(Action):
     @staticmethod
     def get_ready_arg(user: User, transmitter: T, arg: dict, **kwargs) -> Status[dict]:
         user_id_to_room = kwargs['user_id_to_room']
-
+        user_id_to_transmitter = kwargs['user_id_to_transmitter']
         check_status = Action.check_needed_fields(arg, ['tasks'])
         if check_status.status != StatusEnum.SUCCESS:
             return Status(
@@ -26,6 +26,7 @@ class ActionCreateRoom(Action):
             )
 
         if user.id in user_id_to_room:
+            user_id_to_transmitter[user.id] = transmitter
             return Status(
                 StatusEnum.REDIRECT,
                 'You are already in room',

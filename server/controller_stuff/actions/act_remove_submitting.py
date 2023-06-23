@@ -86,8 +86,7 @@ class ActionRemoveSubmitting(Action):
                     'status': 'SUCCESS',
                     'message': ActionRemoveSubmitting.action_message_ok,
                     'target': 'visitor',
-                    'data': {
-                    }
+                    'data': {}
                 },
                 user_id_to_transmitter[visitor_id]
             ))
@@ -97,9 +96,8 @@ class ActionRemoveSubmitting(Action):
                 'action': ActionRemoveSubmitting.action_name,
                 'status': 'SUCCESS',
                 'message': ActionRemoveSubmitting.action_message_ok,
-                'data': {
-                    'target': 'owner'
-                }
+                'target': 'owner',
+                'data': {}
             },
             transmitter
         ))

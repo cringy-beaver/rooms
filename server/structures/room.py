@@ -72,8 +72,14 @@ class Room:
     def new_submitting(self, user: User) -> Status[User]:
         if user != self.owner:
             return Status(
-                StatusEnum.DENIED,
+                StatusEnum.FAILURE,
                 f"Only owner can delete submitting user"
+            )
+
+        if self.submitting_user is not None:
+            return Status(
+                StatusEnum.FAILURE,
+                f"Submitting user is already set"
             )
 
         if len(self.queue) == 0:
@@ -83,7 +89,7 @@ class Room:
                 f"Queue is empty"
             )
 
-        self.submitting_user = self.queue.pop(0)
+        self.submitting_user = self.queue[0]
 
         return Status(
             StatusEnum.SUCCESS,
@@ -98,7 +104,14 @@ class Room:
                 f"Only owner can delete submitting user"
             )
 
+        if self.submitting_user is None:
+            return Status(
+                StatusEnum.FAILURE,
+                f"Submitting user is not set"
+            )
+
         self.submitting_user = None
+        self.queue.pop(0)
 
         return Status(
             StatusEnum.SUCCESS,
@@ -162,13 +175,19 @@ class Room:
     def leave_room(self, user: User, user_id: str) -> Status[list[User]]:
         if user != self.owner and user.id != user_id:
             return Status(
-                StatusEnum.DENIED,
-                f"Only owner can delete submitting user"
+                StatusEnum.FAILURE,
+                f"Only owner can delete user"
             )
 
         if user_id == self.owner.id:
             _user = self.owner
         else:
+            if user_id not in self.id_to_visitor:
+                return Status(
+                    StatusEnum.FAILURE,
+                    f"User with id '{user_id}' not in room"
+                )
+
             _user = self.id_to_visitor[user_id]
 
         if _user == self.owner:
@@ -185,30 +204,38 @@ class Room:
             )
 
         self.id_to_visitor.pop(_user.id)
+        if user in self.queue:
+            self.queue.remove(user)
 
         return Status(
             StatusEnum.SUCCESS,
             f"User '{_user.name} {_user.second_name}' left",
-            data=[]
+            data=[_user]
         )
 
     def join_queue(self, req_user: User) -> Status[None]:
         if req_user == self.owner:
             return Status(
-                StatusEnum.DENIED,
+                StatusEnum.FAILURE,
                 f"Owner can't join to queue"
             )
 
         if req_user.id not in self.id_to_visitor:
             return Status(
-                StatusEnum.DENIED,
+                StatusEnum.FAILURE,
                 f"User '{req_user.name} {req_user.second_name}' not in room"
             )
 
         if req_user in self.queue:
             return Status(
-                StatusEnum.REDIRECT,
+                StatusEnum.FAILURE,
                 f"User '{req_user.name} {req_user.second_name}' already in queue"
+            )
+
+        if self.id_to_visitor[req_user.id].task is None:
+            return Status(
+                StatusEnum.FAILURE,
+                f"User '{req_user.name} {req_user.second_name}' has no task"
             )
 
         self.queue.append(req_user)
@@ -218,7 +245,7 @@ class Room:
             f"User '{req_user.name} {req_user.second_name}' joined to queue"
         )
 
-    def leave_queue(self, req_user: User, index: int = 0) -> Status[None]:
+    def leave_queue(self, req_user: User, user_id: str = '') -> Status[None]:
         if len(self.queue) == 0:
             return Status(
                 StatusEnum.FAILURE,
@@ -226,18 +253,42 @@ class Room:
             )
 
         if req_user != self.owner:
+            if self.submitting_user == req_user:
+                return Status(
+                    StatusEnum.FAILURE,
+                    f"Submitting user can't leave queue"
+                )
+
             index = self.queue.index(req_user)
             if index == -1:
                 return Status(
                     StatusEnum.FAILURE,
                     f"User '{req_user.name} {req_user.second_name}' not in queue"
                 )
+        else:
+            if user_id == '':
+                return Status(
+                    StatusEnum.FAILURE,
+                    f"Owner can't leave queue"
+                )
 
-        task = self.queue.pop(index)
+            index = -1
+            for i, user in enumerate(self.queue):
+                if user.id == user_id:
+                    index = i
+                    break
+
+            if index == -1:
+                return Status(
+                    StatusEnum.FAILURE,
+                    f"User '{user_id}' not in queue"
+                )
+
+        _user = self.queue.pop(index)
 
         return Status(
             StatusEnum.SUCCESS,
-            f"User '{task.name}' popped from queue"
+            f"User '{_user.name}' popped from queue"
         )
 
     # def change_position_queue(self, req_user: User, index_1: int, index_2: int) -> Status[tuple[int, int]]:

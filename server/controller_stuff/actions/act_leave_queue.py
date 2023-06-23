@@ -41,6 +41,11 @@ class ActionLeaveQueue(Action):
             'room_id': arg['room_id']
         }
 
+        if 'user_id' in arg:
+            ready_args['user_id'] = arg['user_id']
+        else:
+            ready_args['user_id'] = ''
+
         return Status(
             StatusEnum.SUCCESS,
             'Ready arg created',
@@ -54,6 +59,7 @@ class ActionLeaveQueue(Action):
         user_id_to_transmitter = kwargs['user_id_to_transmitter']
 
         room = id_to_room[ready_args['room_id']]
+        user_id = ready_args['user_id']
 
         response = room.get_user_by_id(user.id)
         if response.status != StatusEnum.SUCCESS:
@@ -75,7 +81,7 @@ class ActionLeaveQueue(Action):
 
         _user = response.data
 
-        status = room.leave_queue(_user)
+        status = room.leave_queue(_user, user_id)
         if status.status != StatusEnum.SUCCESS:
             return Status(
                 status.status,

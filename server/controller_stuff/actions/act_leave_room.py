@@ -64,7 +64,7 @@ class ActionLeaveRoom(Action):
         )
 
     @staticmethod
-    def get_result(visitor: User, transmitter: T, ready_args: dict, **kwargs) \
+    def get_result(visitor_id: User, transmitter: T, ready_args: dict, **kwargs) \
             -> Status[list[tuple[dict, T]]]:
         id_to_room = kwargs['id_to_room']
         user_id_to_room = kwargs['user_id_to_room']
@@ -73,7 +73,7 @@ class ActionLeaveRoom(Action):
         room = id_to_room[ready_args['room_id']]
         user_to_pop_id = ready_args['user_id']
 
-        response = room.get_user_by_id(visitor.id)
+        response = room.get_user_by_id(visitor_id.id)
         if response.status != StatusEnum.SUCCESS:
             return Status(
                 response.status,
@@ -116,7 +116,7 @@ class ActionLeaveRoom(Action):
             data_to_sends: list[tuple[dict, T]] = []
             visitors = status.data
 
-            for visitor in visitors:
+            for visitor_id in visitors:
                 data_to_sends.append(
                     (
                         {
@@ -126,12 +126,12 @@ class ActionLeaveRoom(Action):
                             'target': 'visitor',
                             'data': {}
                         },
-                        user_id_to_transmitter[visitor.id]
+                        user_id_to_transmitter[visitor_id.id]
                     )
                 )
 
-                del user_id_to_room[visitor.id]
-                del user_id_to_transmitter[visitor.id]
+                del user_id_to_room[visitor_id.id]
+                del user_id_to_transmitter[visitor_id.id]
 
             data_to_sends.append(
                 (
@@ -157,17 +157,20 @@ class ActionLeaveRoom(Action):
             )
 
         data_to_sends: list[tuple[dict, T]] = []
+        user_left = status.data[0]
 
-        for visitor in room.id_to_visitor:
+        for visitor_id in room.id_to_visitor:
             data_to_sends.append(
                 (
                     {
                         'action': ActionLeaveRoom.action_name,
                         'status': 'SUCCESS',
                         'message': ActionLeaveRoom.action_message_ok,
-                        'data': {}
+                        'data': {
+                            'user': user_left.as_dict_public()
+                        }
                     },
-                    user_id_to_transmitter[visitor.id]
+                    user_id_to_transmitter[visitor_id]
                 )
             )
 
@@ -177,11 +180,31 @@ class ActionLeaveRoom(Action):
                     'action': ActionLeaveRoom.action_name,
                     'status': 'SUCCESS',
                     'message': ActionLeaveRoom.action_message_ok,
-                    'data': {}
+                    'data': {
+                        'user': user_left.as_dict_private()
+                    }
+                },
+
+                user_id_to_transmitter[user_left.id]
+            )
+        )
+
+        data_to_sends.append(
+            (
+                {
+                    'action': ActionLeaveRoom.action_name,
+                    'status': 'SUCCESS',
+                    'message': ActionLeaveRoom.action_message_ok,
+                    'data': {
+                        'user': user_left.as_dict_private()
+                    }
                 },
                 user_id_to_transmitter[room.owner.id]
             )
         )
+
+        del user_id_to_room[user_left.id]
+        del user_id_to_transmitter[user_left.id]
 
         return Status(
             StatusEnum.SUCCESS,
