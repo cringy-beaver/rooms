@@ -204,8 +204,8 @@ class Room:
             )
 
         self.id_to_visitor.pop(_user.id)
-        if user in self.queue:
-            self.queue.remove(user)
+        if _user in self.queue:
+            self.queue.remove(_user)
 
         return Status(
             StatusEnum.SUCCESS,
@@ -259,12 +259,13 @@ class Room:
                     f"Submitting user can't leave queue"
                 )
 
-            index = self.queue.index(req_user)
-            if index == -1:
+            if req_user not in self.queue:
                 return Status(
                     StatusEnum.FAILURE,
                     f"User '{req_user.name} {req_user.second_name}' not in queue"
                 )
+
+            index = self.queue.index(req_user)
         else:
             if user_id == '':
                 return Status(

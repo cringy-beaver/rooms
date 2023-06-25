@@ -30,17 +30,17 @@ class ActionJoinRoom(Action):
         if user.id in user_id_to_room:
             user_id_to_transmitter[user.id] = transmitter
 
-            if user_id_to_room[user.id].owner == user:
+            if user_id_to_room[user.id].owner.id == user.id:
                 return Status(
-                    StatusEnum.REDIRECT,
-                    'You are owner of room',
+                    StatusEnum.FAILURE,
+                    'You are owner of room, close old room',
                     data={
                         'action': ActionJoinRoom.action_name,
-                        'status': 'REDIRECT',
-                        'message': 'You are owner of room',
+                        'status': 'FAILURE',
+                        'message': 'You are owner of room, close old room',
                         'data': {
-                            'room': user_id_to_room[user.id].as_dict_by_user(user),
-                            'user': user_id_to_room[user.id].owner.as_dict_private()
+                            # 'room': user_id_to_room[user.id].as_dict_by_user(user),
+                            # 'user': user_id_to_room[user.id].owner.as_dict_private()
                         }
                     }
                 )
