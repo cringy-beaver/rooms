@@ -55,6 +55,18 @@ class ActionCreateRoom(Action):
 
             tasks.append(task.data)
 
+        if len(tasks) == 0:
+            return Status(
+                StatusEnum.FAILURE,
+                'Empty tasks',
+                data={
+                    'action': ActionCreateRoom.action_name,
+                    'status': 'FAILURE',
+                    'message': 'Empty tasks',
+                    'data': {}
+                }
+            )
+
         ready_args = {
             'owner': user,
             'tasks': tasks
